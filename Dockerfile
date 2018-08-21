@@ -5,20 +5,18 @@ ENV LANG C.UTF-8
 WORKDIR /srv
 
 # System dependencies
-RUN apt-get update && apt-get install --yes nginx
+RUN apt-get update && apt-get install --yes python3-pip
+
+# Import code, install code dependencies
+ADD . .
+RUN pip3 install -r requirements.txt
 
 # Set git commit ID
 ARG COMMIT_ID
 RUN test -n "${COMMIT_ID}"
+RUN echo "${COMMIT_ID}" > version-info.txt
 
-# Copy over files
-ADD build .
-ADD nginx.conf /etc/nginx/sites-enabled/default
-ADD redirects.map /etc/nginx/redirects.map
-RUN sed -i "s/~COMMIT_ID~/${COMMIT_ID}/" /etc/nginx/sites-enabled/default
-RUN sed -i "s/8205/80/" /etc/nginx/sites-enabled/default
-
-STOPSIGNAL SIGTERM
-
-CMD ["nginx", "-g", "daemon off;"]
+# Setup commands to run server
+ENTRYPOINT ["./entrypoint"]
+CMD ["0.0.0.0:80"]
 
